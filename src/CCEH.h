@@ -4,7 +4,10 @@
 #include <cstring>
 #include <cmath>
 #include <vector>
+#include <iostream>
+#include <nvm_malloc.h>
 #include "util/pair.h"
+#include "util/persist.h"
 #include "src/hash.h"
 
 constexpr size_t kSegmentBits = 8;
@@ -24,6 +27,13 @@ struct Segment {
   Segment(size_t depth)
   :local_depth{depth}
   { }
+
+  void init(size_t depth) {
+    local_depth = depth;
+    for (unsigned i = 0; i < kNumSlot; i++) {
+      _[i].key = INVALID;
+    }
+  }
 
   ~Segment(void) {
   }
@@ -63,7 +73,13 @@ struct Directory {
   Directory(void) {
     depth = kDefaultDepth;
     capacity = pow(2, depth);
+#ifdef PMEM
+    _ = (Segment**) nvm_reserve(capacity * sizeof(Segment*));
+    clflush((char*)_, capacity * sizeof(Segment*));
+    nvm_activate(_, NULL, NULL, NULL, NULL);
+#else
     _ = new Segment*[capacity];
+#endif
     lock = false;
     sema = 0;
   }
@@ -71,13 +87,38 @@ struct Directory {
   Directory(size_t _depth) {
     depth = _depth;
     capacity = pow(2, depth);
+#ifdef PMEM
+    _ = (Segment**) nvm_reserve(capacity * sizeof(Segment*));
+    clflush((char*)_, capacity * sizeof(Segment*));
+    nvm_activate(_, NULL, NULL, NULL, NULL);
+#else
     _ = new Segment*[capacity];
+#endif
+    lock = false;
+    sema = 0;
+  }
+
+  void init(size_t _depth) {
+    depth = _depth;
+    capacity = pow(2, depth);
+#ifdef PMEM
+    // printf("reserving %lu bytes\n", capacity * sizeof(Segment*));
+    _ = (Segment**) nvm_reserve(capacity * sizeof(Segment*));
+    clflush((char*)_, capacity * sizeof(Segment*));
+    nvm_activate(_, NULL, NULL, NULL, NULL);
+#else
+    _ = new Segment*[capacity];
+#endif
     lock = false;
     sema = 0;
   }
 
   ~Directory(void) {
+#ifdef PMEM
+    nvm_free(_, NULL, NULL, NULL, NULL);
+#else
     delete [] _;
+#endif
   }
 
   bool Acquire(void) {

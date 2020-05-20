@@ -113,7 +113,7 @@ typedef struct U32_INT
     uint32_t v;
 } U32_INT;
 
-uint64_t hash_read64_align(const void *ptr, uint32_t align)
+inline uint64_t hash_read64_align(const void *ptr, uint32_t align)
 {
     if (align == 0)
     {
@@ -122,7 +122,7 @@ uint64_t hash_read64_align(const void *ptr, uint32_t align)
     return *(uint64_t *)ptr;
 }
 
-uint32_t hash_read32_align(const void *ptr, uint32_t align)
+inline uint32_t hash_read32_align(const void *ptr, uint32_t align)
 {
     if (align == 0)
     {
@@ -131,7 +131,7 @@ uint32_t hash_read32_align(const void *ptr, uint32_t align)
     return *(uint32_t *)ptr;
 }
 
-uint64_t hash_compute(const void *input, uint64_t length, uint64_t seed, uint32_t align)
+inline uint64_t hash_compute(const void *input, uint64_t length, uint64_t seed, uint32_t align)
 {
     const uint8_t *p = (const uint8_t *)input;
     const uint8_t *end = p + length;
@@ -232,7 +232,7 @@ uint64_t hash_compute(const void *input, uint64_t length, uint64_t seed, uint32_
     return hash;
 }
 
-uint64_t xxhash(const void *data, size_t length, size_t seed)
+inline uint64_t xxhash(const void *data, size_t length, size_t seed)
 {
     if ((((uint64_t)data) & 7) == 0)
     {

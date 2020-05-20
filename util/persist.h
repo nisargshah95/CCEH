@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef UTIL_PERSIST_H_
 #define UTIL_PERSIST_H_
 
@@ -8,8 +10,8 @@
 #define CAS(_p, _u, _v)  (__atomic_compare_exchange_n (_p, _u, _v, false, __ATOMIC_ACQUIRE, __ATOMIC_ACQUIRE))
 #define kCacheLineSize (64)
 
-extern uint64_t kWriteLatencyInNS;
-extern uint64_t clflushCount;
+// /*extern*/ uint64_t kWriteLatencyInNS=0;
+// /*extern*/ uint64_t clflushCount = 0;
 
 static inline void CPUPause(void) {
   __asm__ volatile("pause":::"memory");
@@ -31,10 +33,10 @@ inline void clflush(char* data, size_t len) {
   volatile char *ptr = (char*)((unsigned long)data & (~(kCacheLineSize-1)));
   mfence();
   for (; ptr < data+len; ptr+=kCacheLineSize) {
-    unsigned long etcs = ReadTSC() + (unsigned long) (kWriteLatencyInNS*CPU_FREQ_MHZ/1000);
+    // unsigned long etcs = ReadTSC() + (unsigned long) (0*CPU_FREQ_MHZ/1000);
     asm volatile("clflush %0" : "+m" (*(volatile char*)ptr));
-    while (ReadTSC() < etcs) CPUPause();
-    clflushCount++;
+    // while (ReadTSC() < etcs) CPUPause();
+    // clflushCount++;
   }
   mfence();
 }
